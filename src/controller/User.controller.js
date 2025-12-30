@@ -80,4 +80,65 @@ const registerUser= asynchr(async (req, res)=>{
 
 
 })
-export default  registerUser;
+const generateAccessAndRefreshToken = async (userId)=>{
+ try{
+   const user= await User.findById(userId);
+   const refreshtoken= await user.generateRefreshToken();
+    const accessshtoken=await  user.generateAccessToken();
+    user.refreshtoken=refreshtoken;
+    await user.save({ validateBeforeSave: false });
+    return {refreshtoken, accessshtoken};
+
+
+
+
+ }
+ catch(error){
+   throw new ApiError(500, " somthing went wrong while forming access token");
+
+ }
+
+
+
+}
+const loginUser = asynchr(async (req, res) => {
+   // take input from pstman
+  
+   // verify if username and password is in correct format
+   // verify if username and password matches with one in mongo db
+   // if not matches give error that user is not found
+   // provide both access and refresh token
+   // if send the cookies
+   const {username, email, password }= req.body;
+   if(!username && !email){
+      throw new ApiError(400,"give username or email");
+   }
+    if(!password){
+      throw new ApiError(400,"give password");
+   }
+   const checkExistence= await User.findOne(
+   {
+      $or : [{username},{email}]
+   }
+   )
+   if(!checkExistence){
+        throw new ApiError(400,"User Not Found");
+       }
+       const options = {
+        httpOnly: true,
+        secure: true
+    }
+   
+   // console.log("user", checkExistence);
+    const checkPassword =  await checkExistence.checkPassword(password);
+    if(!checkPassword){
+      throw new ApiError(400,"Invalid Credentials");
+    }
+     const {refreshtoken, accessshtoken} = await generateAccessAndRefreshToken(checkExistence._id);
+   
+
+   return   res.status(200).cookie("accessToken",accessshtoken,options).cookie("refreshToken",refreshtoken,options).json(
+       new ApiResponse(200, {accessToken: accessshtoken, refreshToken: refreshtoken}, "User logged In")
+)  
+})
+export { registerUser, loginUser };
