@@ -17,8 +17,10 @@ const registerUser= asynchr(async (req, res)=>{
 
 
 // checkinging if no field is vacant
- const {username , email, fullname, password}=req.body;
- if([username , email, fullname, password].some(item=>item.trim()==="")){
+ //console.log(req.body);
+
+ const { username , email, fullname, password } = req.body;
+ if([ username , email , fullname , password ].some(item=>item.trim() === "")){
     throw new ApiError(400,"All field are compulsary");
  }
  // check for existing email or  user
@@ -31,19 +33,26 @@ const registerUser= asynchr(async (req, res)=>{
 
  }
  // get location of image or file stored in local file or server through multer middleware
- const avatarLocalPath = req.files?.avatar[0]?.path;
- const coverImageLocalPath = req.files?.coverImage[0]?.path;
+ const avatarLocalPath = req.files?.avatar?.[0]?.path;
+ const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
  if(!avatarLocalPath){
       throw new ApiError(400,"Avatar is compulsary");
 
  }
+ //console.log("🔥 Avatar Local Path:", avatarLocalPath);
  //upload to cloudinary avatar and cover photo
  const uploadAvatarCloudinary= await uploadOnCloudinary(avatarLocalPath);
- const uploadcoverImageCloudinary= await uploadOnCloudinary(coverImageLocalPath);
+ const uploadcoverImageCloudinary= null;
+ console.log("🔥 Cover Image Local Path:", coverImageLocalPath);
+ if(coverImageLocalPath){
+ uploadcoverImageCloudinary=await uploadOnCloudinary(coverImageLocalPath);
+ }
  // in case it fails
+ //console.log("🔥 cloudinary location ", uploadAvatarCloudinary);
  if(!uploadAvatarCloudinary){
     throw new  ApiError(500," unable to upload on clodinary ");
  }
+ console.log("success avatar upload");
  // create user Object
  const ObjectCreate= await User.create({
         username,
@@ -61,6 +70,7 @@ const registerUser= asynchr(async (req, res)=>{
           throw new  ApiError(500,"unable to update user info on db");
 
     }
+    console.log("success user created");
     // return success response
 
     return res.status(201).json(

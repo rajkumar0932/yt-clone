@@ -2,19 +2,12 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwstoken from 'jsonwebtoken';
 const userSchema= new mongoose.Schema({
-    id:{
-        type: String,
-        unique: true,
-        required: true,
-        trim: true,
-        index: true
-     },
-    
+ 
     WatchHistory:
-    {
+   [ {
         type:  mongoose.Schema.Types.ObjectId,
         ref : 'Video'
-    },
+    }],
     username: {
         type: String,
         unique: true,
@@ -38,6 +31,9 @@ const userSchema= new mongoose.Schema({
      avatar:{
         type: String,
      },
+      coverImage:{
+        type: String,
+     },
      password:{
          type: String,
          required: true,
@@ -49,14 +45,14 @@ const userSchema= new mongoose.Schema({
      }
 
 },{
-    timespans: true
+    timestamps: true
 }
 
 )
 userSchema.pre('save',async function (next){
-    if(!this.isModified("password")) return next();
-   this.password= bcrypt.hash(this.password,10);
-   next();
+    if(!this.isModified("password")) return next;
+   this.password= await bcrypt.hash(this.password,10);
+   next;
 
 
 
@@ -66,20 +62,24 @@ userSchema.methods.checkPassword= async function(password){
 }
 userSchema.methods.generateAccessToken =function (){
     return jwstoken.sign({
-        id: this.id,
+        id: this._id,
         username:this.username
     },process.env.ACCESS_TOKEN_SECRET,{
-        ACCESS_TOKEN_DELAY
-
+       expiresIn: process.env.ACCESS_TOKEN_DELAY
     }
 )
 }
 userSchema.methods.generateRefreshToken =function (){
-    return jwstoken.sign({
-        id: this.id,
+    return jwstoken.sign(
+    {
+        id: this._id,
         username:this.username
-    },process.env.REFRESH_TOKEN_SECRET,{
-        REFRESH_TOKEN_DELAY
+    }
+    ,
+    process.env.REFRESH_TOKEN_SECRET,
+
+    {
+      expiresIn: process.env.REFRESH_TOKEN_DELAY
 
     }
 )

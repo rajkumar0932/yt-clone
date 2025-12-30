@@ -1,8 +1,15 @@
-import dotenv from 'dotenv';
-import express from 'express';
+import dotenv from 'dotenv'
+import path from 'path'
+
+dotenv.config({
+  path: path.resolve(process.cwd(), '.env')
+})
+
+import express from 'express'
 import dbconnect from './db/index.js'
 import app from './app.js'
-dotenv.config();
+
+
 
 dbconnect()
 .then(
