@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { upload }  from  '../middleware/multer.middleware.js';
-import {registerUser,loginUser,logout} from '../controller/User.controller.js';
+import {registerUser,loginUser,logout,regenerateAccessToken} from '../controller/User.controller.js';
 import  { AuthMiddleware } from '../middleware/Auth.middleware.js';
 const userRouter= Router();
 userRouter.route('/register').post(
@@ -22,6 +22,7 @@ userRouter.route('/register').post(
     registerUser);
 userRouter.route('/login').post(loginUser);
 userRouter.route('/logout').post(AuthMiddleware,logout);
+userRouter.route('/renewAccessToken').post(regenerateAccessToken);
 
 
 export default userRouter;
