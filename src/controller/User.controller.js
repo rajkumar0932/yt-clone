@@ -44,7 +44,7 @@ const registerUser= asynchr (async (req, res)=>{
  //upload to cloudinary avatar and cover photo
  const uploadAvatarCloudinary= await uploadOnCloudinary(avatarLocalPath);
  const uploadcoverImageCloudinary= null;
- console.log("🔥 Cover Image Local Path:", coverImageLocalPath);
+// console.log("🔥 Cover Image Local Path:", coverImageLocalPath);
  if(coverImageLocalPath){
  uploadcoverImageCloudinary=await uploadOnCloudinary(coverImageLocalPath);
  }
@@ -53,7 +53,7 @@ const registerUser= asynchr (async (req, res)=>{
  if(!uploadAvatarCloudinary){
     throw new  ApiError(500," unable to upload on clodinary ");
  }
- console.log("success avatar upload");
+// console.log("success avatar upload");
  // create user Object
  const ObjectCreate= await User.create({
         username,
