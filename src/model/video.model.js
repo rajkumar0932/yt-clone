@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import mongooseAggregatePaginate from  'mongooseAggregatePaginate';
 
- const videoSchema= new mongoose.Schema({
+ const videoSchema= new mongoose.Schema
+ ({
     id:{
         type: String,
         unique:true,
