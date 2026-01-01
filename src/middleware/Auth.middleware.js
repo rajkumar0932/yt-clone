@@ -4,11 +4,13 @@ import {User} from '../model/user.model.js';
 import { ApiError }  from "../util/customerror.js";
 export const AuthMiddleware = asyncHandler(async (req, res,next)=>{
     try {
-        const accessToken =req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "") ;
+        const accessToken =req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "") || req.body.accessToken;
+        console.log("access token in middleware", accessToken);
+      
           if (!accessToken) {
                 throw new ApiError(401, "Unauthorized request")
             }
-             console.log("access token", accessToken);
+            
             const decodedToken =jwt.verify(accessToken,process.env.ACCESS_TOKEN_SECRET);
             const user = await User.findById(decodedToken.id).select("-password -refreshtoken");
             console.log("decoded token", decodedToken.id);

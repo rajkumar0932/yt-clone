@@ -44,7 +44,7 @@ const registerUser= asynchr (async (req, res)=>{
  //upload to cloudinary avatar and cover photo
  const uploadAvatarCloudinary= await uploadOnCloudinary(avatarLocalPath);
  const uploadcoverImageCloudinary= null;
- console.log("🔥 Cover Image Local Path:", coverImageLocalPath);
+// console.log("🔥 Cover Image Local Path:", coverImageLocalPath);
  if(coverImageLocalPath){
  uploadcoverImageCloudinary=await uploadOnCloudinary(coverImageLocalPath);
  }
@@ -53,7 +53,7 @@ const registerUser= asynchr (async (req, res)=>{
  if(!uploadAvatarCloudinary){
     throw new  ApiError(500," unable to upload on clodinary ");
  }
- console.log("success avatar upload");
+ //console.log("success avatar upload");
  // create user Object
  const ObjectCreate= await User.create({
         username,
@@ -71,7 +71,7 @@ const registerUser= asynchr (async (req, res)=>{
           throw new  ApiError(500,"unable to update user info on db");
 
     }
-    console.log("success user created");
+    //console.log("success user created");
     // return success response
 
     return res.status(201).json(
@@ -176,4 +176,91 @@ const regenerateAccessToken = asynchr (async (req, res, next)=>{
 
 
 })
-export { registerUser, loginUser, logout,regenerateAccessToken };
+const changePassword =asynchr (async (req, res, next)=>{
+   // we have to extract password from body
+   const {oldPassword, newPassword}= req.body;
+   if(!oldPassword || !newPassword){
+         throw new ApiError(400,"Both old and new password required");
+   }
+
+ // console.log(req.user);
+   const user = await User.findById(req.user.id);
+   const matchPassword= user.checkPassword(oldPassword);
+   if(!matchPassword){
+       throw new ApiError(400,"ENTER CORRECT PASSWORD");
+   }
+        user.password = newPassword;
+       await user.save({validateBeforeSave: false})
+        return res.status(200).json(new ApiResponse(200,{},"Password changed Successfully"));
+
+
+
+
+
+})
+const displayUser=asynchr (async (req, res, next)=>{
+   return res.status(200).json(new ApiResponse(200,req.user,"User Profile Sent"));
+
+})
+const updateAvtar=asynchr (async (req, res, next)=>{
+   const avatarLoc= req.files.avatar?.[0];
+ 
+   const savedAvatar= await User.findByIdAndUpdate(req.user.id,{
+      $set:{
+         avatar: avatarLoc.path
+      }
+
+   },{
+      new: true
+   }).select(" -password ");
+   if(!savedAvatar){
+      throw new ApiError(500,"unable to update avatar");
+   }
+
+   return res.status(200).json(new ApiResponse(200,savedAvatar,"Avatar updated Successfully"));
+
+})
+const updateCoverImage = asynchr(async (req, res) => {
+  const coverImageLoc = req.files?.coverImage?.[0];
+
+  if (!coverImageLoc) {
+    throw new ApiError(400, "Cover image is required");
+  }
+
+  const savedCoverImage = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      $set: {
+        coverImage: coverImageLoc.path,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  if (!savedCoverImage) {
+    throw new ApiError(500, "Unable to update cover image");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, savedCoverImage, "Cover image updated successfully")
+    );
+});
+
+const updateProfileInfo =asynchr (async (req, res, next)=>{
+   const {username , email }= req.body;
+   if(!username || !email) {
+      throw new ApiError(400, "Give both field");
+   }
+   console.log("req.user.id", req.user.id);
+   const updatedUser = await User.findByIdAndUpdate(req.user.id,{
+      $set:{
+         username :username,
+         email : email
+       }
+   }).select("-password");
+   return res.status(200).json(new ApiResponse(200,updatedUser,"User profile Updated"))
+
+})
+export { registerUser, loginUser, logout,regenerateAccessToken ,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo};
