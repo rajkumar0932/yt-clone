@@ -53,11 +53,7 @@ const registerUser= asynchr (async (req, res)=>{
  if(!uploadAvatarCloudinary){
     throw new  ApiError(500," unable to upload on clodinary ");
  }
-<<<<<<< HEAD
  //console.log("success avatar upload");
-=======
-// console.log("success avatar upload");
->>>>>>> 8aad2be19d6d609573040c4e4e63c74ba5001c6b
  // create user Object
  const ObjectCreate= await User.create({
         username,
@@ -180,7 +176,6 @@ const regenerateAccessToken = asynchr (async (req, res, next)=>{
 
 
 })
-<<<<<<< HEAD
 const changePassword =asynchr (async (req, res, next)=>{
    // we have to extract password from body
    const {oldPassword, newPassword}= req.body;
@@ -269,6 +264,3 @@ const updateProfileInfo =asynchr (async (req, res, next)=>{
 
 })
 export { registerUser, loginUser, logout,regenerateAccessToken ,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo};
-=======
-export { registerUser, loginUser, logout,regenerateAccessToken };
->>>>>>> 8aad2be19d6d609573040c4e4e63c74ba5001c6b
