@@ -84,9 +84,11 @@ const registerUser= asynchr (async (req, res)=>{
 const generateAccessAndRefreshToken = async (userId)=>{
  try{
    const user= await User.findById(userId);
+ //  console.log("user in generate token", user);
    const refreshtoken= await user.generateRefreshToken();
     const accessshtoken=await  user.generateAccessToken();
     user.refreshtoken=refreshtoken;
+  //  console.log("refreshtoken and accessshtoken", refreshtoken, accessshtoken);
     await user.save({ validateBeforeSave: false });
     return {refreshtoken, accessshtoken};
 
@@ -155,7 +157,7 @@ const regenerateAccessToken = asynchr (async (req, res, next)=>{
    if(!refreshToken){
         throw new ApiError(400,"refresh Token not available");
    }
-   const decoded= jwt.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET);
+   const decoded=  jwt.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET);
    
    const user =await User.findById(decoded.id);
    if(!user){
@@ -166,15 +168,14 @@ const regenerateAccessToken = asynchr (async (req, res, next)=>{
         throw new ApiError(400,"refresh Token is expired");
 
    }
-   const {refreshTokens, accessTokens} = generateAccessAndRefreshToken (user.id);
+   const {refreshtoken, accessshtoken} = await generateAccessAndRefreshToken (user.id);
    const options ={
       secure: true,
         httpOnly: true,
 
    }
-   return res.status(200).cookie("refreshToken",refreshTokens,options).cookie("accessToken",accessTokens,options).json( new ApiResponse (200,{},"accessToken refreshed") );
-
-
+   console.log("refreshtoken and accessshtoken", refreshtoken, accessshtoken);
+   return res.status(200).cookie("refreshToken",refreshtoken,options).cookie("accessToken",accessshtoken,options).json( new ApiResponse (200,{refreshtoken, accessshtoken},"accessToken refreshed") );
 })
 const changePassword =asynchr (async (req, res, next)=>{
    // we have to extract password from body
@@ -263,4 +264,91 @@ const updateProfileInfo =asynchr (async (req, res, next)=>{
    return res.status(200).json(new ApiResponse(200,updatedUser,"User profile Updated"))
 
 })
-export { registerUser, loginUser, logout,regenerateAccessToken ,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo};
+
+const getUserproile =asynchr ( async (req, res, next)=>{
+ const {username} =req.params;
+ if(!username){
+   throw ApiError(400, "no user presemt")
+ }
+
+
+ const details = await User.aggregate([
+   {$match: {
+      username: username
+   }},
+   {
+      $lookup: {
+         from : "subs",
+         localField :"_id",
+         foreignField : "subscribeTo",
+         as: "subscribers"
+
+      }
+   },
+   {
+       $lookup: {
+         from : "subs",
+         localField :"_id",
+         foreignField : "subscriber",
+         as: "subscribeTo"
+
+      }
+   },
+   {
+      $addFields:
+      { 
+         subscriberCount :{
+            $size :"$subscribers"
+         },
+          subscribedToCount : {
+            $size : "$subscribeTo"
+          },
+         isSubscribed: {
+  $cond: {
+    if: {
+      $in: [
+        req.user?._id,
+        {
+          $map: {
+            input: "$subscribers",
+            as: "sub",
+            in: "$$sub.subscriber"
+          }
+        }
+      ]
+    },
+    then: true,
+    else: false
+  }
+}
+
+   }
+
+
+   },
+   {
+     
+         $project : {
+             fullName: 1,
+                username: 1,
+                subscriberCount: 1,
+                subscribedToCount : 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+
+
+         }
+      
+   }
+]);
+console.log("details", details);
+if(!details || details.length ===0){
+   throw new ApiError(400, "user not found")
+
+}
+return res.status(200).json(new ApiResponse(200, details[0], "User Profile fetched"));
+
+})
+export { registerUser, loginUser, logout,regenerateAccessToken ,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo,getUserproile};

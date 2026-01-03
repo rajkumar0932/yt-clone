@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { upload }  from  '../middleware/multer.middleware.js';
-import {registerUser,loginUser,logout,regenerateAccessToken,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo} from '../controller/User.controller.js';
+import {registerUser,loginUser,logout,regenerateAccessToken,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo,getUserproile} from '../controller/User.controller.js';
 import  { AuthMiddleware } from '../middleware/Auth.middleware.js';
 const userRouter= Router();
 userRouter.route('/register').post(
@@ -38,6 +38,7 @@ userRouter.route("/updateCoverImage").post(
   updateCoverImage
 );
 userRouter.route('/updateProfile').post(AuthMiddleware,updateProfileInfo);
+userRouter.route("/users/:username").post(AuthMiddleware,getUserproile);
 
 export default userRouter;
 
