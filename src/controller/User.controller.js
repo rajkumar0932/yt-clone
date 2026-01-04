@@ -265,7 +265,7 @@ const updateProfileInfo =asynchr (async (req, res, next)=>{
 
 })
 
-const getUserproile =asynchr ( async (req, res, next)=>{
+const getUserprofile =asynchr ( async (req, res, next)=>{
  const {username} =req.params;
  if(!username){
    throw ApiError(400, "no user presemt")
@@ -351,4 +351,53 @@ if(!details || details.length ===0){
 return res.status(200).json(new ApiResponse(200, details[0], "User Profile fetched"));
 
 })
-export { registerUser, loginUser, logout,regenerateAccessToken ,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo,getUserproile};
+const getWatchHistory =asynchr ( async (req, res, next)=>{
+   const user =await User.aggregate([
+      {
+         $match :{
+            _id: new mongoose.Types.ObjectId(req.user._id)
+         }
+
+      }
+      ,{
+         $lookup :{
+            from : "videos",
+            localField : "WatchHistory",
+            foreignField: "_id",
+            as: "watchHistoryVideos",
+             pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+
+         }
+
+      }
+      
+   ])
+   return res.status(200).json(new ApiResponse(200, user[0].watchHistoryVideos, "User Watch History fetched"));
+
+})
+export { registerUser, loginUser, logout,regenerateAccessToken ,changePassword,displayUser,updateAvtar,updateCoverImage,updateProfileInfo,getUserprofile,getWatchHistory};
